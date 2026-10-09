@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+import os
 
 def read_fasta(fasta_file):
     #Read a FASTA file and return a dictionary of sequences.
@@ -28,37 +29,36 @@ def read_fasta(fasta_file):
     #print(sequences)
     return sequences, header_details
 
-def n_prop(sequences, prop, inverse=False):
-    keepers = []
-    #print(sequences)
-    for header, seq in sequences.items():
-        #print(seq)
-        seq = seq.upper()
-        seq_len = len(seq[0])
-        N_count = seq[0].count("N")
-        N_prop = N_count/seq_len
-        #print(N_prop)
-        prop = float(prop)
-        if inverse:
-            if N_prop > prop:
-                keepers.append(header)
-        else: 
-            if N_prop < prop:
-                keepers.append(header)
+def file_input_parser(input_file):
+    names_to_remove = []
+    with open(input_file) as in_file:
+        for line in in_file:
+            names_to_remove.append(line.rstrip().rstrip(",").lstrip(">"))
+            
+    return names_to_remove
 
-    #print(keepers)
-    return keepers
+def list_parser(input_list):
+    names_to_remove = input_list.rstrip("] ").lstrip("[").split(",")
 
-def get_it_out(keepers, sequences_to_write, input_file, output=False):
+    return names_to_remove
+
+
+def get_it_out(names_to_remove, sequences, header_details, input_file, output=False):
     if output:
         output_name = output + ".fasta"
     else:
-        output_name = input_file.split(".fa")[0] + ".clean.fasta"
-    print(f"You have kept {len(keepers)} sequences out of {len(sequences_to_write)}, good for you.")
+        output_name = input_file.split(".fa")[0] + ".curated.fasta"
+    
+    counter = 0
     with open(f"{output_name}", "w") as output_file:
-        for header in keepers:
-            output_file.write(f'>{header}\n{sequences_to_write[header]}\n')
-
+        for header in sequences:
+            if header in names_to_remove:
+                continue
+            else:
+                output_file.write(f'>{header} {header_details[header]}\n{sequences[header]}\n')
+                counter += 1
+    print(f"You originally had {len(sequences)}, you wanted to remove {len(names_to_remove)} sequences, you now have {counter} sequences left, good for you.")
+    
 
 
 if __name__ == '__main__':
@@ -67,7 +67,8 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s -f reference.fasta -p 0.1 -o output_name
+  %(prog)s -f reference.fasta -r file_of_names_one_per_line.txt -o output_name
+  %(prog)s -f reference.fasta -r name1,name2,name3 -o output_name
         """
     )
     parser.add_argument(
@@ -76,22 +77,20 @@ Examples:
         help="Path to input FASTA file"
     )
     parser.add_argument(
-        "-p", "--prop",
+        "-r", "--remove",
         required=True,
-        help="Proportion of N bases. Higher than this and the sequence is chucked out!"
+        help="File or comma separated list of headers to remove (only needs the bit up to first white space)"
     )
     parser.add_argument(
         "-o", "--output",
         help="Output file name (suffix always .fasta)"
     )
-    parser.add_argument(
-        "--inverse",
-        action='store_true',
-        help="Use this if you want to KEEP the sequences with at least X proportion of N bases. You mad man!"
-    )
     
     args = parser.parse_args()
     
     sequences, header_details = read_fasta(args.fasta)
-    keepers = n_prop(sequences, args.prop, args.inverse)
-    get_it_out(keepers, sequences, args.fasta, args.output)
+    if os.path.exists(args.remove):
+        names_to_remove = file_input_parser(args.remove)
+    else:
+        names_to_remove = list_parser(args.remove)
+    get_it_out(names_to_remove, sequences, header_details, args.fasta, args.output)
