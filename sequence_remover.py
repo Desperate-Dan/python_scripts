@@ -57,13 +57,13 @@ def get_it_out(names_to_remove, sequences, header_details, input_file, output=Fa
             else:
                 output_file.write(f'>{header} {header_details[header]}\n{sequences[header]}\n')
                 counter += 1
-    print(f"You originally had {len(sequences)}, you wanted to remove {len(names_to_remove)} sequences, you now have {counter} sequences left, good for you.")
+    print(f"You originally had {len(sequences)}, you wanted to remove {len(names_to_remove)}, you now have {counter} sequences left, good for you.")
     
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Some sequences have lot of Ns? Get rid of 'em! The output is a flat fasta. Get over it.",
+        description="Don't like some of your sequences? Get rid of 'em!",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

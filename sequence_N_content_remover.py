@@ -34,10 +34,9 @@ def n_prop(sequences, prop, inverse=False):
     for header, seq in sequences.items():
         #print(seq)
         seq = seq.upper()
-        seq_len = len(seq[0])
-        N_count = seq[0].count("N")
+        seq_len = len(seq)
+        N_count = seq.count("N")
         N_prop = N_count/seq_len
-        #print(N_prop)
         prop = float(prop)
         if inverse:
             if N_prop > prop:
@@ -46,7 +45,7 @@ def n_prop(sequences, prop, inverse=False):
             if N_prop < prop:
                 keepers.append(header)
 
-    #print(keepers)
+    print(keepers)
     return keepers
 
 def get_it_out(keepers, sequences_to_write, input_file, output=False):
